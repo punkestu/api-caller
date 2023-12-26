@@ -9,5 +9,5 @@ pub struct State {
     pub method_input: TextArea<'static>,
     pub header_input: TextArea<'static>,
     pub body_input: TextArea<'static>,
-    pub response: String,
+    pub response: TextArea<'static>,
 }

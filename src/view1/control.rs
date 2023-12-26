@@ -6,6 +6,7 @@ use std::{
 use super::{runner, State};
 use crate::state::{AppState, FocusState};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
+use tui_textarea::TextArea;
 
 pub fn handler(event: Event, state: &Arc<RwLock<State>>) {
     if let Event::Key(key) = event {
@@ -19,7 +20,7 @@ pub fn handler(event: Event, state: &Arc<RwLock<State>>) {
                 input_handler(key, &mut w_state);
             } else {
                 match key.code {
-                    KeyCode::Esc => {
+                    KeyCode::Char('q') => {
                         w_state.state = AppState::Close;
                     }
                     KeyCode::Char('u') => {
@@ -38,11 +39,25 @@ pub fn handler(event: Event, state: &Arc<RwLock<State>>) {
                         w_state.focus = FocusState::Focus("method_input".into());
                         w_state.state = AppState::Typing;
                     }
+                    KeyCode::Char('r') => {
+                        w_state.focus = FocusState::Focus("response_field".into());
+                        w_state.state = AppState::Typing;
+                    }
                     KeyCode::Enter => {
-                        w_state.response = "sending response".to_string();
+                        w_state.response = TextArea::from(["sending response".to_string()]);
+                        let method = w_state.method_input.lines()[0].clone();
+                        let url = w_state.url_input.lines()[0].clone();
+                        let body = w_state.body_input.lines().join("\n");
+                        let header = w_state.header_input.lines().to_vec();
                         let t_state = state.clone();
                         thread::spawn(move || {
-                            runner::run(t_state);
+                            runner::run(
+                                method.as_str(),
+                                url.as_str(),
+                                header,
+                                body.as_str(),
+                                t_state,
+                            );
                         });
                     }
                     _ => {}
@@ -55,18 +70,36 @@ pub fn handler(event: Event, state: &Arc<RwLock<State>>) {
 fn input_handler(key: KeyEvent, state: &mut State) {
     if let FocusState::Focus(focus_on) = &state.focus {
         match focus_on.as_str() {
-            "url_input" => {
-                state.url_input.input(key);
-            }
+            "url_input" => match key.code {
+                KeyCode::Enter => {
+                    state.state = AppState::Idle;
+                    state.focus = FocusState::None;
+                }
+                _ => {
+                    state.url_input.input(key);
+                }
+            },
             "body_input" => {
                 state.body_input.input(key);
             }
             "header_input" => {
                 state.header_input.input(key);
             }
-            "method_input" => {
-                state.method_input.input(key);
-            }
+            "method_input" => match key.code {
+                KeyCode::Enter => {
+                    state.state = AppState::Idle;
+                    state.focus = FocusState::None;
+                }
+                _ => {
+                    state.method_input.input(key);
+                }
+            },
+            "response_field" => match key.code {
+                KeyCode::Char(_) => {}
+                _ => {
+                    state.response.input(key);
+                }
+            },
             _ => {}
         }
     }

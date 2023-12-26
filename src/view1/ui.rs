@@ -15,34 +15,40 @@ use std::{
 pub fn render<B: Backend>(terminal: &mut Terminal<B>, state: &Arc<RwLock<State>>) -> Result<()> {
     terminal.draw(|frame| {
         let area = frame.size();
-        let focus_on: String = state.read().unwrap().focus.focus_on();
+        let mut w_state = state.write().unwrap();
         setup(
-            &focus_on,
+            &w_state.focus.focus_on(),
             "url_input".into(),
             "URL [u]".into(),
-            &mut state.write().unwrap().url_input,
+            &mut w_state.url_input,
         );
         setup(
-            &focus_on,
+            &w_state.focus.focus_on(),
             "body_input".into(),
             "BODY [b]".into(),
-            &mut state.write().unwrap().body_input,
+            &mut w_state.body_input,
         );
         setup(
-            &focus_on,
+            &w_state.focus.focus_on(),
             "header_input".into(),
             "HEADER [h]".into(),
-            &mut state.write().unwrap().header_input,
+            &mut w_state.header_input,
         );
         setup(
-            &focus_on,
+            &w_state.focus.focus_on(),
             "method_input".into(),
             "METHOD [m]".into(),
-            &mut state.write().unwrap().method_input,
+            &mut w_state.method_input,
+        );
+        setup(
+            &w_state.focus.focus_on(),
+            "response_field".into(),
+            "RESPONSE [r]".into(),
+            &mut w_state.response,
         );
         let main = Block::default()
             .borders(Borders::ALL)
-            .title("API CALLER [esc]")
+            .title("API CALLER [q]")
             .title_alignment(Alignment::Center);
 
         let inner = main.inner(area);
@@ -66,11 +72,8 @@ pub fn render<B: Backend>(terminal: &mut Terminal<B>, state: &Arc<RwLock<State>>
             .split(header_req[1]);
 
         frame.render_widget(main, area);
-        frame.render_widget(
-            state.read().unwrap().method_input.widget(),
-            method_url_send[0],
-        );
-        frame.render_widget(state.read().unwrap().url_input.widget(), method_url_send[1]);
+        frame.render_widget(w_state.method_input.widget(), method_url_send[0]);
+        frame.render_widget(w_state.url_input.widget(), method_url_send[1]);
         frame.render_widget(
             Paragraph::new("SEND [enter]")
                 .bold()
@@ -78,13 +81,9 @@ pub fn render<B: Backend>(terminal: &mut Terminal<B>, state: &Arc<RwLock<State>>
                 .alignment(Alignment::Center),
             method_url_send[2],
         );
-        frame.render_widget(state.read().unwrap().header_input.widget(), header_req[0]);
-        frame.render_widget(state.read().unwrap().body_input.widget(), req_res[0]);
-        frame.render_widget(
-            Paragraph::new(state.read().unwrap().response.as_str())
-                .block(Block::default().borders(Borders::ALL).title("RESPONSE")),
-            req_res[1],
-        )
+        frame.render_widget(w_state.header_input.widget(), header_req[0]);
+        frame.render_widget(w_state.body_input.widget(), req_res[0]);
+        frame.render_widget(w_state.response.widget(), req_res[1])
     })?;
     Ok(())
 }
