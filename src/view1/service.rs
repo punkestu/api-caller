@@ -43,7 +43,6 @@ pub fn request(method: &str, url: &str, headers: Vec<String>, body: String) -> R
     });
 
     let request = request
-        .header(CONTENT_TYPE, "application/json")
         .body(body)
         .build()
         .map_err(|err| -> String { err.to_string() })?;

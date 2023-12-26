@@ -53,14 +53,14 @@ pub fn render<B: Backend>(terminal: &mut Terminal<B>, state: &Arc<RwLock<State>>
 
         let inner = main.inner(area);
         let vertical = Layout::default()
-            .constraints([Constraint::Percentage(8), Constraint::Percentage(92)])
+            .constraints([Constraint::Length(3), Constraint::Percentage(92)])
             .split(inner);
         let method_url_send = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([
-                Constraint::Percentage(10),
+                Constraint::Min(12),
                 Constraint::Percentage(80),
-                Constraint::Percentage(10),
+                Constraint::Min(14),
             ])
             .split(vertical[0]);
         let header_req = Layout::default()
