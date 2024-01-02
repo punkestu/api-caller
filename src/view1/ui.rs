@@ -1,5 +1,5 @@
 use super::State;
-use crate::components::textarea::setup;
+use crate::components::{tab::tabs, textarea::setup};
 use ratatui::{
     backend::Backend,
     layout::{Alignment, Constraint, Direction, Layout},
@@ -53,7 +53,11 @@ pub fn render<B: Backend>(terminal: &mut Terminal<B>, state: &Arc<RwLock<State>>
 
         let inner = main.inner(area);
         let vertical = Layout::default()
-            .constraints([Constraint::Length(3), Constraint::Percentage(92)])
+            .constraints([
+                Constraint::Length(3),
+                Constraint::Length(3),
+                Constraint::Percentage(80),
+            ])
             .split(inner);
         let method_url_send = Layout::default()
             .direction(Direction::Horizontal)
@@ -62,15 +66,16 @@ pub fn render<B: Backend>(terminal: &mut Terminal<B>, state: &Arc<RwLock<State>>
                 Constraint::Percentage(80),
                 Constraint::Min(14),
             ])
-            .split(vertical[0]);
+            .split(vertical[1]);
         let header_req = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Percentage(35), Constraint::Percentage(65)])
-            .split(vertical[1]);
+            .split(vertical[2]);
         let req_res = Layout::default()
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
             .split(header_req[1]);
 
+        tabs(frame, w_state.tag, vertical[0]);
         frame.render_widget(main, area);
         frame.render_widget(w_state.method_input.widget(), method_url_send[0]);
         frame.render_widget(w_state.url_input.widget(), method_url_send[1]);
@@ -83,7 +88,7 @@ pub fn render<B: Backend>(terminal: &mut Terminal<B>, state: &Arc<RwLock<State>>
         );
         frame.render_widget(w_state.header_input.widget(), header_req[0]);
         frame.render_widget(w_state.body_input.widget(), req_res[0]);
-        frame.render_widget(w_state.response.widget(), req_res[1])
+        frame.render_widget(w_state.response.widget(), req_res[1]);
     })?;
     Ok(())
 }

@@ -15,13 +15,20 @@ mod state;
 mod ui;
 
 pub fn run<B: Backend>(terminal: &mut Terminal<B>) -> Result<()> {
-    let state = Arc::from(RwLock::from(State::default()));
+    let state: Vec<Arc<RwLock<State>>> = vec![
+        Arc::from(RwLock::from(State::new(1))),
+        Arc::from(RwLock::from(State::new(2))),
+    ];
+    let mut active_tab = 0;
     loop {
-        ui::render(terminal, &state)?;
+        ui::render(terminal, &state[active_tab])?;
         if poll(config::TICK_TIMEOUT)? {
-            control::handler(read()?, &state);
+            let get_tab = control::handler(read()?, &state[active_tab]);
+            if get_tab > 0 {
+                active_tab = get_tab - 1;
+            }
         }
-        if let AppState::Close = state.read().unwrap().state {
+        if let AppState::Close = state[active_tab].read().unwrap().state {
             break;
         }
     }

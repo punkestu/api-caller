@@ -10,4 +10,14 @@ pub struct State {
     pub header_input: TextArea<'static>,
     pub body_input: TextArea<'static>,
     pub response: TextArea<'static>,
+    pub tag: usize,
+}
+
+impl State {
+    pub fn new(tag: usize) -> Self {
+        Self {
+            tag,
+            ..State::default()
+        }
+    }
 }

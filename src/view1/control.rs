@@ -8,7 +8,8 @@ use crate::state::{AppState, FocusState};
 use crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
 use tui_textarea::TextArea;
 
-pub fn handler(event: Event, state: &Arc<RwLock<State>>) {
+pub fn handler(event: Event, state: &Arc<RwLock<State>>) -> usize {
+    let mut want_active = 0;
     if let Event::Key(key) = event {
         if key.kind == KeyEventKind::Press {
             let mut w_state = state.write().unwrap();
@@ -43,6 +44,12 @@ pub fn handler(event: Event, state: &Arc<RwLock<State>>) {
                         w_state.focus = FocusState::Focus("response_field".into());
                         w_state.state = AppState::Typing;
                     }
+                    KeyCode::Char('1') => {
+                        want_active = 1;
+                    }
+                    KeyCode::Char('2') => {
+                        want_active = 2;
+                    }
                     KeyCode::Enter => {
                         w_state.response = TextArea::from(["sending response".to_string()]);
                         let method = w_state.method_input.lines()[0].clone();
@@ -65,6 +72,7 @@ pub fn handler(event: Event, state: &Arc<RwLock<State>>) {
             }
         }
     }
+    want_active
 }
 
 fn input_handler(key: KeyEvent, state: &mut State) {
