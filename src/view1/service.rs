@@ -1,4 +1,4 @@
-use reqwest::header::{HeaderName, CONTENT_TYPE};
+use reqwest::header::HeaderName;
 use serde_json::Value;
 use std::{result, str::FromStr};
 
@@ -48,20 +48,22 @@ pub fn request(method: &str, url: &str, headers: Vec<String>, body: String) -> R
         .map_err(|err| -> String { err.to_string() })?;
     match client.execute(request) {
         Ok(response) => {
-            let content_type = response.headers().get(CONTENT_TYPE);
+            let content_type = response.headers().get("content-type");
             match content_type {
-                Some(t) => match t.to_str().map_err(|err| -> String { err.to_string() })? {
-                    "application/json" => Ok(format_json(
-                        response
-                            .text()
-                            .or_else(|_| -> Result<String> { Ok("".to_string()) })
-                            .map_err(|err| -> String { err.to_string() })?,
-                    )
-                    .map_err(|err| -> String { err.to_string() })?),
-                    _ => Ok(response
+                Some(t) => {
+                    let content_type = t.to_str().map_err(|err| -> String { err.to_string() })?;
+                    if content_type.contains("application/json") {
+                        let formated = format_json(
+                            response
+                                .text()
+                                .map_err(|err| -> String { err.to_string() })?,
+                        )?;
+                        return Ok(formated);
+                    }
+                    Ok(response
                         .text()
-                        .map_err(|err| -> String { err.to_string() })?),
-                },
+                        .map_err(|err| -> String { err.to_string() })?)
+                }
                 None => Ok(response
                     .text()
                     .map_err(|err| -> String { err.to_string() })?),
